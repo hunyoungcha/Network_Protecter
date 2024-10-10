@@ -16,7 +16,9 @@ class CFirewall {
         static void packetHandler(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet);
         int RunFirewall();
         int GetDeviceName();
+        int CapturePacket();
     private:
-        std::string m_strDevice;  
+        char* m_chDevice;  
+        pcap_if_t* m_pifAllDevices;
 };
 

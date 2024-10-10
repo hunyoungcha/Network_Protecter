@@ -24,20 +24,20 @@ void CFirewall::packetHandler(u_char *args, const struct pcap_pkthdr *header, co
 
 int CFirewall::GetDeviceName() {
     char chErrbuf[PCAP_ERRBUF_SIZE];
-    pcap_if_t *all_devs, *device;
+    pcap_if_t *device;
 
-    if (pcap_findalldevs(&all_devs, chErrbuf) == -1) {
+    if (pcap_findalldevs(&m_pifAllDevices, chErrbuf) == -1) {
         std::cerr << "Error finding devices: " << chErrbuf << std::endl;
         return 1;
     }
 
     //찾은 디바이스 출력
     int nDeviceCnt=1;
-    std::vector<std::string> vecDeviceList; //인덱싱을 위한 디바이스 벡터
+    std::vector<char*> vecDeviceList; //인덱싱을 위한 디바이스 벡터
 
     std::cout << "Devices :" << std::endl;
     
-    for (device = all_devs; device != NULL; device= device -> next){
+    for (device = m_pifAllDevices; device != NULL; device= device -> next){
         vecDeviceList.push_back(device->name);
 
         std::cout <<"   "<< nDeviceCnt << "." << device->name ;   
@@ -62,8 +62,7 @@ int CFirewall::GetDeviceName() {
         return 1;
     }
 
-    m_strDevice = vecDeviceList[nDeviceNum-1];
-
+    m_chDevice = vecDeviceList[nDeviceNum-1] ;
     // 나중에 input 형식을 아래와 같이 변경해서 에러 처리하기
     // std::string strDeviceNum ;
     // if (Ini.isValidNumber(strDeviceNum) == false){
@@ -73,21 +72,19 @@ int CFirewall::GetDeviceName() {
     return 0;
 }
 
+//실시간 패킷 캡처 함수
+int CFirewall::CapturePacket() {
+    char chErrbuf[PCAP_ERRBUF_SIZE];
 
-int CFirewall::RunFirewall() {
-    // // 네트워크 장치 열기
-    // pcap_t *handle = pcap_open_live(device->name, BUFSIZ, 1, 1000, chErrbuf);
-    // if (handle == nullptr) {
-    //     std::cerr << "Could not open device " << device->name << ": " << chErrbuf << std::endl;
-    //     return 1;
-    // }
+    pcap_t *handle = pcap_open_live(m_chDevice , BUFSIZ, 1, 1000, chErrbuf);
+    if (handle == nullptr) {
+        std::cerr << "Could not open device " << m_chDevice << ": " << chErrbuf << std::endl;
+        return 1; //에러 처리 하기
+    }
 
-    // // 실시간 패킷 캡처 시작
-    // pcap_loop(handle, 0, CFirewall::packetHandler, nullptr);
-
-    // // 캡처 종료 후 장치 닫기
-    // pcap_close(handle);
-    // pcap_freealldevs(all_devs);
+    pcap_loop(handle, 0, CFirewall::packetHandler, nullptr);
+    pcap_close(handle);
+    pcap_freealldevs(m_pifAllDevices);
 
     return 0;
 }

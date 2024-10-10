@@ -8,5 +8,8 @@ int main(){
     // Ifirewall.RunFirewall();
 
     Ifirewall.GetDeviceName();
+    Ifirewall.CapturePacket();
+
+    
     return 0;
 }
