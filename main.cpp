@@ -8,7 +8,7 @@ int main(){
     // Ifirewall.RunFirewall();
 
     Ifirewall.GetDeviceName();
-    Ifirewall.CapturePacket();
+    Ifirewall.RunFirewall();
 
     
     return 0;
