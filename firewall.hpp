@@ -17,13 +17,12 @@
 
 class CFirewall {
 public:
-    static void packetHandler(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet);
+    void PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* packet);  // **변경: static 제거**
     int RunFirewall();
     int GetDeviceName();
     int BlockIP();
 
 private:
-    static void SignalHandler(int signum);
     
     char* m_chDevice;  
     pcap_if_t* m_pifAllDevices;

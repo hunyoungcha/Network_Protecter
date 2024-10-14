@@ -3,7 +3,9 @@
 #include "firewall.hpp"
 
 // 패킷 캡처 콜백 함수
-void CFirewall::packetHandler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
+void CFirewall::PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* packet) {
+    
+    
     struct ether_header *eth_header = (struct ether_header *) packet;
     
     // IP 패킷 확인
@@ -67,7 +69,7 @@ int CFirewall::GetDeviceName() {
 int CFirewall::RunFirewall() {
     char chErrbuf[PCAP_ERRBUF_SIZE];
 
-    std::signal(SIGINT, SignalHandler);
+    // std::signal(SIGINT, SignalHandler);
 
     pcap_t *handle = pcap_open_live(m_chDevice, BUFSIZ, 1, 1000, chErrbuf);
     if (handle == nullptr) {
@@ -75,9 +77,13 @@ int CFirewall::RunFirewall() {
         return 1;
     }
 
-    std::thread blockerThread(CFirewall::BlockIP);
-    pcap_loop(handle, 0, CFirewall::packetHandler, nullptr);
-
+    std::thread blockerThread(&CFirewall::BlockIP, this);
+    pcap_loop(handle, 0, 
+        [](u_char* args, const struct pcap_pkthdr* header, const u_char* packet) {
+            auto* firewall = reinterpret_cast<CFirewall*>(args);  // this 포인터로 객체 접근
+            firewall->PacketHandler(header, packet);  // 멤버 함수 호출
+        }, reinterpret_cast<u_char*>(this));  // **변경: this 전달**
+    
     blockerThread.join();
     pcap_close(handle);
     pcap_freealldevs(m_pifAllDevices);
@@ -88,14 +94,13 @@ int CFirewall::RunFirewall() {
 int CFirewall::BlockIP() {
     while (m_bCapturing) {
         std::unique_lock<std::mutex> lock(m_queueMutex);
-        m_queueCV.wait(lock, [] { return !m_qIpQueue.empty() || !m_bCapturing; });
+        m_queueCV.wait(lock, [this] { return !m_qIpQueue.empty() || !m_bCapturing; });
         
         while (!m_qIpQueue.empty()) {
             std::string ipToBlock = m_qIpQueue.front();
             m_qIpQueue.pop();
             lock.unlock();
 
-            // IP 차단 명령 실행 (예: iptables 사용)
             std::string command = "iptables -A INPUT -s " + ipToBlock + " -j DROP";
             system(command.c_str());
             std::cout << "Blocked IP: " << ipToBlock << std::endl;
@@ -106,10 +111,10 @@ int CFirewall::BlockIP() {
 
     return 0;
 }
+ 
+// void CFirewall::SignalHandler(int signum) {     ini 파일로 빼서 모든 기능에 대한 signal 관리하기 (관리 함수 필요(게터세터?) )
+//     m_bCapturing = false;
+//     m_queueCV.notify_all();
 
-void CFirewall::SignalHandler(int signum) {
-    m_bCapturing = false;
-    m_queueCV.notify_all();
-
-    system("iptables -F");
-}
+//     system("iptables -F");
+// }
