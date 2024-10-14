@@ -15,21 +15,20 @@
 #include <condition_variable>
 #include <csignal>
 
-
-
 class CFirewall {
-    public:
-        static void packetHandler(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet);
-        int RunFirewall();
-        int GetDeviceName();
-        int BlockIP();
-    private:
-        static void SignalHandler(int signum);
-        char* m_chDevice;  
-        pcap_if_t* m_pifAllDevices;
-        std::queue<std::string> m_qIpQueue;
-        std::mutex m_queueMutex;
-        std::condition_variable m_queueCV;
-        bool m_bCapturing = true;
-};
+public:
+    static void packetHandler(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet);
+    int RunFirewall();
+    int GetDeviceName();
+    int BlockIP();
 
+private:
+    static void SignalHandler(int signum);
+    
+    char* m_chDevice;  
+    pcap_if_t* m_pifAllDevices;
+    std::queue<std::string> m_qIpQueue;
+    std::mutex m_queueMutex;
+    std::condition_variable m_queueCV;
+    bool m_bCapturing = true;
+};
