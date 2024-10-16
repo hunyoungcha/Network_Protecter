@@ -2,6 +2,21 @@
 
 #include "firewall.hpp"
 
+CFirewall::CFirewall() {
+    char* errMsg =0;
+
+    int rc = sqlite3_open("firewall.db", &m_db);
+    if (rc) {
+        std::cerr << "Can't open database: " << sqlite3_errmsg(m_db) << std::endl;
+    }
+}
+
+CFirewall::~CFirewall() {
+    if (m_db) {
+        sqlite3_close(m_db);
+    }
+}
+
 // 패킷 캡처 콜백 함수
 void CFirewall::PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* packet) {
     
@@ -112,6 +127,10 @@ int CFirewall::BlockIP() {
     return 0;
 }
  
+
+
+
+
 // void CFirewall::SignalHandler(int signum) {     ini 파일로 빼서 모든 기능에 대한 signal 관리하기 (관리 함수 필요(게터세터?) )
 //     m_bCapturing = false;
 //     m_queueCV.notify_all();

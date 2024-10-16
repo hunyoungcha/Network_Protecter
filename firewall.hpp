@@ -19,10 +19,14 @@
 
 class CFirewall {
 public:
+    CFirewall();
+    ~CFirewall();
     void PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* packet);
     int RunFirewall();
     int GetDeviceName();
     int BlockIP();
+
+
 
 private:
     
@@ -32,4 +36,5 @@ private:
     std::mutex m_queueMutex;
     std::condition_variable m_queueCV;
     bool m_bCapturing = true;
+    sqlite3* m_db;
 };
