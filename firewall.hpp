@@ -25,7 +25,7 @@ public:
     int RunFirewall();
     int GetDeviceName();
     int BlockIP();
-
+    void SelectData();
 
 
 private:
@@ -37,4 +37,5 @@ private:
     std::condition_variable m_queueCV;
     bool m_bCapturing = true;
     sqlite3* m_db;
+    int m_nRc; //database의 상태를 저장하는 변수
 };

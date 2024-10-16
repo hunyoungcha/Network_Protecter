@@ -2,11 +2,13 @@
 
 #include "firewall.hpp"
 
+
 CFirewall::CFirewall() {
+
     char* errMsg =0;
 
-    int rc = sqlite3_open("firewall.db", &m_db);
-    if (rc) {
+    m_nRc = sqlite3_open("firewall.db", &m_db);
+    if (m_nRc) {
         std::cerr << "Can't open database: " << sqlite3_errmsg(m_db) << std::endl;
     }
 }
@@ -14,6 +16,17 @@ CFirewall::CFirewall() {
 CFirewall::~CFirewall() {
     if (m_db) {
         sqlite3_close(m_db);
+    }
+}
+
+void CFirewall::SelectData() {
+    char* errMsg = 0;
+    const char* cmd = "SELECT * from FirewallRules";
+
+    m_nRc = sqlite3_exec(m_db, cmd, CIni::SqlCallback, 0, &errMsg);
+    if (m_nRc != SQLITE_OK) {
+        std::cerr << "SQL error: " << errMsg << std::endl;
+        sqlite3_free(errMsg);
     }
 }
 
