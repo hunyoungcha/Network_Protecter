@@ -15,9 +15,11 @@
 #include <condition_variable>
 #include <csignal>
 
+
+
 class CFirewall {
 public:
-    void PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* packet);  // **변경: static 제거**
+    void PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* packet);
     int RunFirewall();
     int GetDeviceName();
     int BlockIP();
@@ -26,7 +28,7 @@ private:
     
     char* m_chDevice;  
     pcap_if_t* m_pifAllDevices;
-    std::queue<std::string> m_qIpQueue;
+    std::queue<std::string> m_qIpQueue; //실시간으로 들어오는 패킷의 IP_src를 저장하는 큐
     std::mutex m_queueMutex;
     std::condition_variable m_queueCV;
     bool m_bCapturing = true;

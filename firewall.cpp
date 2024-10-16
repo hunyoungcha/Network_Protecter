@@ -80,9 +80,9 @@ int CFirewall::RunFirewall() {
     std::thread blockerThread(&CFirewall::BlockIP, this);
     pcap_loop(handle, 0, 
         [](u_char* args, const struct pcap_pkthdr* header, const u_char* packet) {
-            auto* firewall = reinterpret_cast<CFirewall*>(args);  // this 포인터로 객체 접근
-            firewall->PacketHandler(header, packet);  // 멤버 함수 호출
-        }, reinterpret_cast<u_char*>(this));  // **변경: this 전달**
+            auto* firewall = reinterpret_cast<CFirewall*>(args);  
+            firewall->PacketHandler(header, packet);  
+        }, reinterpret_cast<u_char*>(this));  
     
     blockerThread.join();
     pcap_close(handle);
