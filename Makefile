@@ -31,4 +31,4 @@ $(TARGET): $(OBJECTS)
 
 # 'make clean'을 실행할 때 오브젝트 파일 제거
 clean:
-	rm -f $(OBJECTS) $(TEST_OBJECTS)
+	rm -f $(OBJECTS)

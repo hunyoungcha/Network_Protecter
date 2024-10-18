@@ -19,6 +19,7 @@ CFirewall::~CFirewall() {
     }
 }
 
+// DB 데이터 select 함수
 void CFirewall::SelectData() {
     char* errMsg = 0;
     const char* cmd = "SELECT * from FirewallRules";

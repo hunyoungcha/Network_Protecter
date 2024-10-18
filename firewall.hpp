@@ -27,7 +27,6 @@ public:
     int BlockIP();
     void SelectData();
 
-
 private:
     
     char* m_chDevice;  

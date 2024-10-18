@@ -7,8 +7,7 @@ int main(){
 
     // Ifirewall.RunFirewall();
 
-    Ifirewall.GetDeviceName();
-    Ifirewall.RunFirewall();
+    Ifirewall.SelectData();
 
     
     return 0;
