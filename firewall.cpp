@@ -34,14 +34,13 @@ void CFirewall::SelectData() {
 // 패킷 캡처 콜백 함수
 void CFirewall::PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* packet) {
     
-    
     struct ether_header *eth_header = (struct ether_header *) packet;
     
     // IP 패킷 확인
     if (ntohs(eth_header->ether_type) == ETHERTYPE_IP) {
         struct ip *ip_header = (struct ip *)(packet + sizeof(struct ether_header));
         
-        std::string strSourceIP = inet_ntoa(ip_header->ip_src);
+        std::string strSourceIP = inet_ntoa(ip_header->ip_dst);
         
         {
             std::lock_guard<std::mutex> lock(m_queueMutex);
@@ -130,7 +129,8 @@ int CFirewall::BlockIP() {
             m_qIpQueue.pop();
             lock.unlock();
 
-            std::string command = "iptables -A INPUT -s " + ipToBlock + " -j DROP";
+            std::string command = "iptables -A OUTPUT -d " + ipToBlock + " -j DROP";
+
             system(command.c_str());
             std::cout << "Blocked IP: " << ipToBlock << std::endl;
 

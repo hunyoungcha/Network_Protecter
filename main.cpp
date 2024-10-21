@@ -8,6 +8,8 @@ int main(){
     // Ifirewall.RunFirewall();
 
     Ifirewall.SelectData();
+    Ifirewall.GetDeviceName();
+    Ifirewall.RunFirewall();
 
     
     return 0;
