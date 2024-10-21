@@ -40,11 +40,11 @@ void CFirewall::PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* pa
     if (ntohs(eth_header->ether_type) == ETHERTYPE_IP) {
         struct ip *ip_header = (struct ip *)(packet + sizeof(struct ether_header));
         
-        std::string strSourceIP = inet_ntoa(ip_header->ip_dst);
+        std::string strSrcIP = inet_ntoa(ip_header->ip_src);
         
         {
             std::lock_guard<std::mutex> lock(m_queueMutex);
-            m_qIpQueue.push(strSourceIP);
+            m_qIpQueue.push(strSrcIP);
         }
         
         m_queueCV.notify_one();
@@ -96,6 +96,7 @@ int CFirewall::GetDeviceName() {
 
 int CFirewall::RunFirewall() {
     char chErrbuf[PCAP_ERRBUF_SIZE];
+    
 
     // std::signal(SIGINT, SignalHandler);
 
@@ -104,6 +105,12 @@ int CFirewall::RunFirewall() {
         std::cerr << "Could not open device " << m_chDevice << ": " << chErrbuf << std::endl;
         return 1;
     }
+
+    struct bpf_program stFilter;
+
+    pcap_compile(handle, &stFilter, FILTER, 0, PCAP_NETMASK_UNKNOWN);
+    pcap_setfilter(handle, &stFilter);
+    pcap_freecode(&stFilter);  // 필터 메모리 해제
 
     std::thread blockerThread(&CFirewall::BlockIP, this);
     pcap_loop(handle, 0, 
@@ -119,6 +126,8 @@ int CFirewall::RunFirewall() {
     return 0;
 }
 
+int cnt = 0;
+
 int CFirewall::BlockIP() {
     while (m_bCapturing) {
         std::unique_lock<std::mutex> lock(m_queueMutex);
@@ -133,7 +142,7 @@ int CFirewall::BlockIP() {
 
             system(command.c_str());
             std::cout << "Blocked IP: " << ipToBlock << std::endl;
-
+            std::cout << cnt++ << std::endl;  
             lock.lock();
         }
     }

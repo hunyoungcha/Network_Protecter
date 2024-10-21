@@ -15,4 +15,4 @@ INSERT INTO FirewallRules (ip, port, direction, action) VALUES
 --     ip, port, direction, action
 -- FROM FirewallRules;
 
--- SELECT 할 때 ROW_NUMBER() 함수를 사용하면 순서대로 자동으로 idx를 지정해줌
+-- ROW_NUMBER() 함수를 사용하면 순서대로 자동으로 idx를 지정해줌

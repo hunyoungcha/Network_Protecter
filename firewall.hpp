@@ -16,6 +16,7 @@
 #include <csignal>
 
 
+constexpr const char* FILTER = "inbound";
 
 class CFirewall {
 public:
