@@ -20,15 +20,25 @@ CFirewall::~CFirewall() {
 }
 
 // DB 데이터 select 함수
-void CFirewall::SelectData() {
+bool CFirewall::CheckIPinDB(const std::string& ip) {
+    std::lock_guard<std::mutex> lock(m_dbMutex);
+    sqlite3_stmt* stmt;
+    
     char* errMsg = 0;
-    const char* cmd = "SELECT * from FirewallRules";
-
-    m_nRc = sqlite3_exec(m_db, cmd, CIni::SqlCallback, 0, &errMsg);
-    if (m_nRc != SQLITE_OK) {
-        std::cerr << "SQL error: " << errMsg << std::endl;
-        sqlite3_free(errMsg);
+    
+    if (sqlite3_prepare_v2(m_db, CHECK_IP_QUREY, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "ERROR : " << sqlite3_errmsg(m_db) << std::endl;
+        return false;
     }
+
+    sqlite3_bind_text(stmt, 1, ip.c_str(), -1, SQLITE_STATIC);
+
+    int result = sqlite3_step(stmt);
+    bool found = (result == SQLITE_ROW);
+
+    sqlite3_finalize(stmt);
+
+    return found;
 }
 
 // 패킷 캡처 콜백 함수
@@ -42,6 +52,10 @@ void CFirewall::PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* pa
         
         std::string strSrcIP = inet_ntoa(ip_header->ip_src);
         
+        if (CheckIPinDB(strSrcIP)){
+            std::cout << "DB에 저장된 IP 들어옴" << std::endl;
+        }
+
         {
             std::lock_guard<std::mutex> lock(m_queueMutex);
             m_qIpQueue.push(strSrcIP);
@@ -126,7 +140,6 @@ int CFirewall::RunFirewall() {
     return 0;
 }
 
-int cnt = 0;
 
 int CFirewall::BlockIP() {
     while (m_bCapturing) {
@@ -138,11 +151,10 @@ int CFirewall::BlockIP() {
             m_qIpQueue.pop();
             lock.unlock();
 
-            std::string command = "iptables -A OUTPUT -d " + ipToBlock + " -j DROP";
+            // std::string command = "iptables -A OUTPUT -d " + ipToBlock + " -j DROP";
 
-            system(command.c_str());
+            // system(command.c_str());
             std::cout << "Blocked IP: " << ipToBlock << std::endl;
-            std::cout << cnt++ << std::endl;  
             lock.lock();
         }
     }

@@ -8,7 +8,8 @@ CREATE TABLE FirewallRules (
 INSERT INTO FirewallRules (ip, port, direction, action) VALUES
 ('192.168.0.1', 80, 'IN', 'PERMIT'),
 ('10.0.0.1', 443, 'OUT', 'PERMIT'),
-('172.16.0.5', 22, 'IN', 'DROP');
+('172.16.0.5', 22, 'IN', 'DROP'),
+('192.168.111.1', 22, 'IN', 'PERMIT');
 
 -- SELECT 
 --     ROW_NUMBER() OVER (ORDER BY ip) AS row_num,
