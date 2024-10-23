@@ -1,14 +1,14 @@
 #include "main.hpp"
 
-CFirewall Ifirewall;
-
 
 int main(){
+    CConfigDB IConfigDB;
+    CFirewall IFirewall(IConfigDB);
 
     // Ifirewall.RunFirewall();
 
-    Ifirewall.GetDeviceName();
-    Ifirewall.RunFirewall();
+    IFirewall.GetDeviceName();
+    IFirewall.RunFirewall();
 
     
     return 0;

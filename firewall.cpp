@@ -3,43 +3,15 @@
 #include "firewall.hpp"
 
 
-CFirewall::CFirewall() {
-
-    char* errMsg =0;
-
-    m_nRc = sqlite3_open("firewall.db", &m_db);
-    if (m_nRc) {
-        std::cerr << "Can't open database: " << sqlite3_errmsg(m_db) << std::endl;
-    }
-}
+CFirewall::CFirewall(CConfigDB& IConfigDB) : m_configDB(IConfigDB) {}
 
 CFirewall::~CFirewall() {
-    if (m_db) {
-        sqlite3_close(m_db);
-    }
+    m_bCapturing = false;
+    m_queueCV.notify_all();
+
+    system("iptables -F");
 }
 
-// DB 데이터 select 함수
-bool CFirewall::CheckIPinDB(const std::string& ip) {
-    std::lock_guard<std::mutex> lock(m_dbMutex);
-    sqlite3_stmt* stmt;
-    
-    char* errMsg = 0;
-    
-    if (sqlite3_prepare_v2(m_db, CHECK_IP_QUREY, -1, &stmt, nullptr) != SQLITE_OK) {
-        std::cerr << "ERROR : " << sqlite3_errmsg(m_db) << std::endl;
-        return false;
-    }
-
-    sqlite3_bind_text(stmt, 1, ip.c_str(), -1, SQLITE_STATIC);
-
-    int result = sqlite3_step(stmt);
-    bool found = (result == SQLITE_ROW);
-
-    sqlite3_finalize(stmt);
-
-    return found;
-}
 
 // 패킷 캡처 콜백 함수
 void CFirewall::PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* packet) {
@@ -52,7 +24,7 @@ void CFirewall::PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* pa
         
         std::string strSrcIP = inet_ntoa(ip_header->ip_src);
         
-        if (CheckIPinDB(strSrcIP)){
+        if (m_configDB.CheckIPinDB(strSrcIP)){
             std::cout << "DB에 저장된 IP 들어옴" << std::endl;
         }
 

@@ -1,5 +1,7 @@
 #pragma once
 #include "ini.hpp"
+#include "configDB.hpp"
+
 
 #include <PcapLiveDeviceList.h>
 #include <PcapLiveDevice.h>
@@ -15,21 +17,18 @@
 #include <condition_variable>
 #include <csignal>
 
-
 constexpr const char* FILTER = "inbound";
-constexpr const char* CHECK_IP_QUREY = "SELECT ip FROM FirewallRules WHERE ip = ? LIMIT 1";
 
 
 class CFirewall {
 public:
-    CFirewall();
+    CFirewall(CConfigDB& IConfigDB);
     ~CFirewall();
     void PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* packet);
     int RunFirewall();
     int GetDeviceName();
     int BlockIP();
-    bool CheckIPinDB(const std::string& ip);
-
+    
 private:
     
     char* m_chDevice;  
@@ -38,8 +37,6 @@ private:
     std::mutex m_queueMutex;
     std::condition_variable m_queueCV;
     bool m_bCapturing = true;
-    sqlite3* m_db;
-    int m_nRc; //database의 상태를 저장하는 변수
-    std::mutex m_dbMutex;
+    CConfigDB& m_configDB;
 
-};
+};  
