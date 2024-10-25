@@ -16,25 +16,34 @@ CFirewall::~CFirewall() {
 // 패킷 캡처 콜백 함수
 void CFirewall::PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* packet) {
     
-    struct ether_header *eth_header = (struct ether_header *) packet;
+    //이더넷 헤더 
+    m_ethHeader = (struct ether_header *) packet;
     
     // IP 패킷 확인
-    if (ntohs(eth_header->ether_type) == ETHERTYPE_IP) {
-        struct ip *m_ipHeader = (struct ip *)(packet + sizeof(struct ether_header));
-
-        std::string strSrcIP = inet_ntoa(m_ipHeader->ip_src);
+    if (ntohs(m_ethHeader->ether_type) == ETHERTYPE_IP) {
         
+        //IP 해더
+        m_ipHeader = (struct ip *)(packet + sizeof(struct ether_header));
 
-        if (m_configDB.CheckIPinDB(strSrcIP)){
-            std::cout << "DB에 저장된 IP 들어옴" << std::endl;
+        if (m_ipHeader->ip_p == IPPROTO_TCP){
+            //TCP 헤더
+            m_tcpHeader = (struct tcphdr *)(packet + sizeof(struct ether_header) + m_ipHeader->ip_hl * 4);
+            bool isMalPayload = CheckPayload(packet);
         }
 
-        {
-            std::lock_guard<std::mutex> lock(m_queueMutex);
-            m_qIpQueue.push(strSrcIP);
-        }
+        // std::string strSrcIP = inet_ntoa(m_ipHeader->ip_src);
         
-        m_queueCV.notify_one();
+
+        // if (m_configDB.CheckIPinDB(strSrcIP)){
+        //     std::cout << "DB에 저장된 IP 들어옴" << std::endl;
+        // }
+
+        // {
+        //     std::lock_guard<std::mutex> lock(m_queueMutex);
+        //     m_qIpQueue.push(strSrcIP);
+        // }
+        
+        // m_queueCV.notify_one();
     }
 }
 
@@ -137,16 +146,28 @@ int CFirewall::BlockIP() {
  
 
 
-int CFirewall::CheckPayload(){
+bool CFirewall::CheckPayload(const u_char* packet){
+    bool isMalPayload = false;
 
-    std::cout << "Checking Payload" << std::endl;
-    return 0;
+    const u_char *payload = packet + sizeof(struct ether_header) + m_ipHeader->ip_hl * 4 + m_tcpHeader->th_off * 4;
+    int payload_length = ntohs(m_ipHeader->ip_len) - (m_ipHeader->ip_hl * 4 + m_tcpHeader->th_off * 4);
+
+    if (payload_length > 0) {
+        printf("Payload (%d bytes):\n", payload_length);
+        for (int i = 0; i < payload_length; i++) {
+            printf("%02x ", payload[i]);  // 16진수 출력
+            if ((i + 1) % 16 == 0) printf("\n");
+        }
+        printf("\n");
+    } 
+    else {
+        printf("No Payload.\n");
+    }
+
+    return isMalPayload;
 }
 
 
-bool CFirewall::isMaliciousIP(){
-    
-}
 
 
 
