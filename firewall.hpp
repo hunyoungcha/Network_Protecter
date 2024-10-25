@@ -40,5 +40,5 @@ private:
     std::condition_variable m_queueCV;
     bool m_bCapturing = true;
     CConfigDB& m_configDB;
-    struct ip m_ip;
+    struct ip m_ipHeader;
 };  

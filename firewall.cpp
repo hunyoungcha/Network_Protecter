@@ -145,8 +145,7 @@ int CFirewall::CheckPayload(){
 
 
 bool CFirewall::isMaliciousIP(){
-
-    std::cout << "" << std::endl;
+    
 }
 
 
