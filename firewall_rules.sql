@@ -14,7 +14,10 @@ INSERT INTO FirewallRules (ip, port, direction, action) VALUES
 
 
 DELETE FROM FirewallRules WHERE ip = '192.168.111.1';
-DELETE FROM FirewallRules WHERE ip = '192.168.111.134';
+-- DELETE FROM FirewallRules WHERE ip = '192.168.111.134';
+
+
+
 -- SELECT 
 --     ROW_NUMBER() OVER (ORDER BY ip) AS row_num,
 --     ip, port, direction, action

@@ -20,10 +20,11 @@ void CFirewall::PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* pa
     
     // IP 패킷 확인
     if (ntohs(eth_header->ether_type) == ETHERTYPE_IP) {
-        struct ip *ip_header = (struct ip *)(packet + sizeof(struct ether_header));
+        struct ip *m_ipHeader = (struct ip *)(packet + sizeof(struct ether_header));
+
+        std::string strSrcIP = inet_ntoa(m_ipHeader->ip_src);
         
-        std::string strSrcIP = inet_ntoa(ip_header->ip_src);
-        
+
         if (m_configDB.CheckIPinDB(strSrcIP)){
             std::cout << "DB에 저장된 IP 들어옴" << std::endl;
         }
@@ -135,6 +136,18 @@ int CFirewall::BlockIP() {
 }
  
 
+
+int CFirewall::CheckPayload(){
+
+    std::cout << "Checking Payload" << std::endl;
+    return 0;
+}
+
+
+bool CFirewall::isMaliciousIP(){
+
+    std::cout << "" << std::endl;
+}
 
 
 

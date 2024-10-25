@@ -28,6 +28,8 @@ public:
     int RunFirewall();
     int GetDeviceName();
     int BlockIP();
+    int CheckPayload();
+    bool isMaliciousIP();
     
 private:
     
@@ -38,5 +40,5 @@ private:
     std::condition_variable m_queueCV;
     bool m_bCapturing = true;
     CConfigDB& m_configDB;
-
+    struct ip m_ip;
 };  
