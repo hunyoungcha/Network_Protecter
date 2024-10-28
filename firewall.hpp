@@ -37,9 +37,11 @@ private:
     char* m_chDevice;  
     pcap_if_t* m_pifAllDevices;
     std::queue<std::string> m_qIpQueue; //실시간으로 들어오는 패킷의 IP_src를 저장하는 큐
-    std::mutex m_queueMutex;
+    std::mutex m_IPqueueMutex;
     std::condition_variable m_queueCV;
     bool m_bCapturing = true;
+    std::mutex m_
+
 
     //패킷 struct
     struct ip *m_ipHeader;

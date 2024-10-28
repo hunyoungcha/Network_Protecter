@@ -1,4 +1,6 @@
 //eBPF 구현 해보기
+// thread 순서 : checkPayload -> ipQueue -> insertDatainDB -> BlockIP
+
 
 #include "firewall.hpp"
 
@@ -15,7 +17,7 @@ CFirewall::~CFirewall() {
 
 // 패킷 캡처 콜백 함수
 void CFirewall::PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* packet) {
-    
+    bool bMalPayload = false;
     //이더넷 헤더 
     m_ethHeader = (struct ether_header *) packet;
     
@@ -28,22 +30,30 @@ void CFirewall::PacketHandler(const struct pcap_pkthdr* pkthdr, const u_char* pa
         if (m_ipHeader->ip_p == IPPROTO_TCP){
             //TCP 헤더
             m_tcpHeader = (struct tcphdr *)(packet + sizeof(struct ether_header) + m_ipHeader->ip_hl * 4);
-            bool isMalPayload = CheckPayload(packet);
+            bMalPayload = CheckPayload(packet);
         }
 
-        // std::string strSrcIP = inet_ntoa(m_ipHeader->ip_src);
+        //나중에 true로 변경해야 함
+        if (bMalPayload == false) {
+            std::string strSrcIP = inet_ntoa(m_ipHeader->ip_src);
+
+
+            {
+                std::lock_guard<std::mutex> lock(m_IPqueueMutex);
+                m_qIpQueue.push(strSrcIP);
+            }
+        
+            m_queueCV.notify_one();
+
+        }
+
+
         
 
         // if (m_configDB.CheckIPinDB(strSrcIP)){
         //     std::cout << "DB에 저장된 IP 들어옴" << std::endl;
         // }
 
-        // {
-        //     std::lock_guard<std::mutex> lock(m_queueMutex);
-        //     m_qIpQueue.push(strSrcIP);
-        // }
-        
-        // m_queueCV.notify_one();
     }
 }
 
@@ -112,7 +122,7 @@ int CFirewall::RunFirewall() {
     pcap_loop(handle, 0, 
         [](u_char* args, const struct pcap_pkthdr* header, const u_char* packet) {
             auto* firewall = reinterpret_cast<CFirewall*>(args);  
-            firewall->PacketHandler(header, packet);  
+            firewall->PacketHandler(header, packet);    
         }, reinterpret_cast<u_char*>(this));  
     
     blockerThread.join();
@@ -125,7 +135,7 @@ int CFirewall::RunFirewall() {
 
 int CFirewall::BlockIP() {
     while (m_bCapturing) {
-        std::unique_lock<std::mutex> lock(m_queueMutex);
+        std::unique_lock<std::mutex> lock(m_IPqueueMutex);
         m_queueCV.wait(lock, [this] { return !m_qIpQueue.empty() || !m_bCapturing; });
         
         while (!m_qIpQueue.empty()) {
@@ -143,7 +153,7 @@ int CFirewall::BlockIP() {
 
     return 0;
 }
- 
+
 
 
 bool CFirewall::CheckPayload(const u_char* packet){
