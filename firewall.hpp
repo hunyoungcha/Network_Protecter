@@ -2,24 +2,11 @@
 #include "ini.hpp"
 #include "configDB.hpp"
 
-
-#include <PcapLiveDeviceList.h>
-#include <PcapLiveDevice.h>
-#include <Packet.h>
-#include <cstring>
-#include <pcap.h>
-#include <netinet/ip.h>
-#include <netinet/ether.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <queue>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <csignal>
-
-constexpr const char* FILTER = "inbound";
-
+#include <pcapplusplus/PcapLiveDeviceList.h>
+#include <pcapplusplus/PcapLiveDevice.h>
+#include <pcapplusplus/Packet.h>
+#include <pcapplusplus/TcpLayer.h>
+#include <pcapplusplus/IPv4Layer.h>
 
 class CFirewall {
 public:
